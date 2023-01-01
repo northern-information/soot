@@ -10,6 +10,9 @@ Soot = include "lib/Soot"
 -- todo
 -- sprite:pin_here_on_the_map()
 -- sprite:some_way_to_control_speed(.5)
+-- sprite:set_blend_mode("add")
+-- move standard screen methods to redraw()
+-- ni graphics library port
 -- map.init() cartographies...
 
 function init()
