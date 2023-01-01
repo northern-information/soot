@@ -4,32 +4,100 @@
 
 Soot is a [sprite](https://en.wikipedia.org/wiki/Sprite_(computer_graphics)) and graphics library for [norns](https://monome.org).
 
-Soot makes animating and positioning your illustrated collection of .pngs easy.
+Soot makes animating and positioning your illustrated collection of .pngs easy. It can be used for UI elements, characters, symbols, and animations.
 
 Soot is only a demo. It is neither production ready nor feature complete.
 
 ## Requirements
 
-Whichever version of norns has [lattice 2.0](https://github.com/monome/norns/pull/1616) (as of November 2022, it hasn't been released yet.) 
+norns `221214`
 
-Alternatively, you can replace your local copy at `/home/we/norns/lua/lib/lattice.lua` with this file: [https://raw.githubusercontent.com/ryleelyman/norns/15b814aeb42ae1f3bf31e19ebe01f28945c7a8c8/lua/lib/lattice.lua](https://raw.githubusercontent.com/ryleelyman/norns/15b814aeb42ae1f3bf31e19ebe01f28945c7a8c8/lua/lib/lattice.lua)
+## Usage
 
-## Setup & Teardown
+1. Create your sprites and save them to sequentially numbered `*.png` files. Each should be grayscale, have no transparency, and share the exact same dimensions. I've been using [Sprite Creator](https://apps.apple.com/us/app/sprite-creator/id1078225966) for iOS and Illustrator/Photoshop.
+2. Install Soot.
+3. Define your sprites somewhere during script startup.
+4. Interact with the various methods from anywhere in your script.
 
-Save `Soot.lua` somewhere in your project and include it:
+## Install
+
+Save `Soot.lua` & `Sprite.lua` as siblings in your project and include them (Soot `includes` Sprite for you):
 
 ```lua
 Soot = include "lib/Soot"
 ```
 
-Soot runs on an abstracted [lattice 2.0](https://monome.org/docs/norns/reference/lib/lattice), so fire up the boilerworks and set your sprite's absolute directory with:
+Initialize Soot with the path of your sprite's absolute directory:
 
 ```lua
-Soot:init()
-Soot:set_sprite_directory("/home/we/dust/code/yourscript/sprites/")
+Soot.init("/home/we/dust/code/my_script/sprites/")
 ```
 
-This will wake up Kamaji and the the celestial machinery needed to keep all the soot sprites in order.
+Within this directory, create a sub-directory for each sprite. "Simple sprites" can have any number of grayscale `*.pngs`. Start numbering at `0`. "Toggle sprites" need two images: `0.png` (off) and `1.png` (on). "Cardinal sprites" need four sub-directories - one for each cardinal direction. These directories can have any number of `*.pngs` inside.
+
+```
+home/we/dust/code/
+  |
+  |-my_script/
+    |
+    |-sprites/
+      |
+      |-arrow_east/
+      | |-0.png
+      | |-1.png
+      |
+      |-arrow_north/
+      | |-0.png
+      | |-1.png
+      |
+      |-arrow_south/
+      | |-0.png
+      | |-1.png
+      |
+      |-arrow_west/
+      | |-0.png
+      | |-1.png
+      |
+      |-cci/
+      | |-e/
+      | | |-0.png
+      | | |-1.png
+      | | |-2.png
+      | | |-3.png
+      | | |-4.png
+      | |
+      | |-n/
+      | | |-0.png
+      | | |-1.png
+      | | |-2.png
+      | | |-3.png
+      | | |-4.png
+      | |
+      | |-s/
+      | | |-0.png
+      | | |-1.png
+      | | |-2.png
+      | | |-3.png
+      | | |-4.png
+      | |
+      | |-w/
+      |   |-0.png
+      |   |-1.png
+      |   |-2.png
+      |   |-3.png
+      |   |-4.png
+      |
+      |-dusty/
+        |-0.png
+        |-1.png          
+        |-2.png          
+        |-3.png          
+        |-4.png          
+        |-5.png          
+        |-6.png          
+        |-7.png          
+        |-8.png          
+```       
 
 Let Soot take care of the redrawing:
 
@@ -39,7 +107,7 @@ function redraw()
 end
 ```
 
-And once the day's work is done, be sure to make this call in your usual `cleanup()` function:
+Be sure to make this call in the standard `cleanup()` function:
 
 ```lua
 function cleanup()
@@ -47,8 +115,64 @@ function cleanup()
 end
 ```
 
-## Usage
+## Define
 
+Soot sprite definitions look something like this:
+
+```lua
+dusty = Soot:new_sprite("dusty"):x(0):y(0):width(16):height(16):start()
+```
+
+This type of syntax is known as "method chaining." Each method returns `self` so you can mix and match them in any order. So the below is functionally identicle to the above:
+
+```lua
+dusty = Soot:new_sprite("dusty"):start():width(16):height(16):x(0):y(0)
+```
+
+Define them however is most comfortable for you!
+
+## Interact
+
+Once defined, used the various Sprite getters and setters to manipulate the graphics.
+
+All sprites implement the following APIs:
+
+```lua
+dusty:show() -- immediately show the sprite
+dusty:hide() -- immediately hide the sprite
+dusty:x(20) -- set dusty's x coords to 20
+dusty:y(30) -- set dusty's y coords to 30
+dusty:width(16) -- set dusty's width
+dusty:height(16) -- set dusty's height
+
+-- use the following boolean getters for control flow:
+dusty:is_visible()
+dusty:is_moving()
+dusty:is_simple()
+dusty:is_toggle()
+dusty:is_cardinal()
+dusty:is_on()
+```
+
+Only toggle sprites can use `turn_on` & `turn_off`:
+
+```lua
+arrow_up:turn_on()
+arrow_up:turn_off()
+```
+
+Simple & cardinal sprites can use `start` & `stop`:
+
+```lua
+dusty:start() -- start the animation
+dusty:stop() -- stop the animation
+```
+
+Only cardinal sprites have a `heading`. This refers to which cardinal direction the sprite is oriented. Only north, east, south, and west are supported.
+
+```lua
+cci:heading("n")
+```
 
 ## Meta
 

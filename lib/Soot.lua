@@ -1,37 +1,55 @@
+include "lib/Sprite"
+
 Soot = {}
 
-
-
-
--- GLOBALS
--- GLOBALS
--- GLOBALS
--- GLOBALS
-
--- the arrow of time only goes one way, pairs well with modulo:
-Soot._frame = 0
-
--- Soot uses a this convention for getters/setters and _variable names:
-function Soot:frame()
-  return self._frame
+function Soot.init(sprites_directory)
+  -- example: "/home/we/dust/code/my_script/sprites/"
+  Soot._sprites_directory = sprites_directory
+  -- the arrow of time only goes one way, pairs well with modulo:
+  Soot._frame = 0
+  -- container for all our sprites
+  Soot._sprites = {}
+  -- we do not want our sprites tied to norns' idea of bpm, so auto = false
+  Soot._lattice = lattice:new{ auto = false }
+  -- this is the core sprocket that drives all the sprite animations
+  sprocket_of_celestial_benevolence = Soot._lattice:new_sprocket{
+    action = function()
+      Soot._frame = Soot._frame + 1
+    end,
+    -- division is now frames per second (in theory)
+    division = 1 / 15,
+  }
+  Soot._lattice:start()
+  Soot._clock_id = clock.run(soot_clock)
 end
 
--- this is the directory where all the sprites live
-Soot._dir = ""
-
-function Soot:set_sprite_directory(dir)
-  self._dir = dir
+-- simple sprites only have the default heading of "north"
+function Soot:new_sprite(name)
+  local sprite = Sprite:new_simple(name)
+  self._sprites[name] = sprite
+  return sprite
 end
 
-function Soot:dir()
-  return self._dir
+-- toggle sprites have two states (0, 1) and the default heading of "north"
+function Soot:new_toggle_sprite(name)
+  local sprite = Sprite:new_toggle(name)
+  self._sprites[name] = sprite
+  return sprite
 end
 
+-- cardinal sprites have different views for north, east, south, and west
+function Soot:new_cardinal_sprite(name)
+  local sprite = Sprite:new_cardinal(name)
+  self._sprites[name] = sprite
+  return sprite
+end
 
--- utility method
-function Soot:scandir(directory)
+-- get all the sprites in a named + heading
+function Soot:get_sprites(name, heading)
+  local heading = heading and heading or ""
+  local absolute_path = self._sprites_directory .. name .. "/" .. heading
   local i, t, popen = 0, {}, io.popen
-  local pfile = popen('ls -a "' .. directory .. '"')
+  local pfile = popen("ls -a " .. absolute_path)
   for filename in pfile:lines() do
     if filename ~= "." and filename ~= ".." then
       i = i + 1
@@ -42,116 +60,65 @@ function Soot:scandir(directory)
   return t
 end
 
-
-
-
--- SCREEN
--- SCREEN
--- SCREEN
--- SCREEN
-
+-- call this from your scripts standard redraw function
 function Soot:redraw()
   screen.clear()
   screen.ping()
   screen.level(15)
-  screen.move(16, 16)
-  screen.text("the fall of math")
+  -- "add" stacks lighter pixels but ignores darker
   screen.blend_mode('add')
-  screen.display_png(mycelium:sprite_directory()  .. Soot:frame() % mycelium:png_count()  .. '.png',  mycelium._x,  mycelium._y)
-  screen.display_png(dusty:sprite_directory()     .. Soot:frame() % dusty:png_count()     .. '.png',  dusty._x,     dusty._y)
-  screen.display_png(quadrants:sprite_directory() .. Soot:frame() % quadrants:png_count() .. '.png',  quadrants._x, quadrants._y)
+  -- loop through each sprite and render them accordingly
+  for name, sprite in pairs(self._sprites) do
+    self:draw_sprite(sprite)
+  end
   screen.update()
 end
 
-
-
-
-
--- BOILER GEEZER
--- BOILER GEEZER
--- BOILER GEEZER
--- BOILER GEEZER
-
--- call this before any tomfoolery with soot sprites begin!
-function Soot:init()
-  -- we do not want our sprites tied to norns' idea of bpm, so auto = false
-  soot_lattice = lattice:new{ auto = false }
-  -- this is the core sprocket that drives all the sprite animations
-  sprocket_of_celestial_benevolence = soot_lattice:new_sprocket{
-    action = function()
-      self._frame = self._frame + 1
-    end,
-    -- division is now frames per second (in theory)
-    division = 1 / 15,
-  }
-  soot_lattice:start()
-  -- todo: how to call Soot:boiler_geezer_clock or self:boiler_geezer_clock?
-  Soot_boiler_geezer_clock_id = clock.run(Soot_boiler_geezer_clock)
+-- handle each type of sprite & completely skip not visible ones
+function Soot:draw_sprite(sprite)
+  if (not sprite:is_visible())  then return end
+  if (sprite:is_toggle())       then self:draw_toggle(sprite)   end
+  if (sprite:is_cardinal())     then self:draw_cardinal(sprite) end
+  if (sprite:is_simple())       then self:draw_simple(sprite)   end
 end
 
--- hopefully this very common function name doesn't pollute your project (see todo above):
-function Soot_boiler_geezer_clock()
+function Soot:draw_toggle(sprite)
+  if (sprite:is_on()) then
+    screen.display_png(sprite:on(), sprite:get_x(), sprite:get_y())
+  else
+    screen.display_png(sprite:off(), sprite:get_x(), sprite:get_y())
+  end
+end
+
+function Soot:draw_cardinal(sprite)
+  self:draw_simple(sprite)
+end
+
+function Soot:draw_simple(sprite)
+  if (sprite:is_moving()) then
+    screen.display_png(sprite:next(), sprite:get_x(), sprite:get_y())
+  else
+    screen.display_png(sprite:current(), sprite:get_x(), sprite:get_y())
+  end
+end
+
+-- simple clock to drive the lattice
+function soot_clock()
   while true do
-    -- latice is built on 96 ppqn and Soot wants to think in fps
-    clock.sleep(1/(96*4))
+    -- lattice is built on 96 ppqn and Soot wants to think in fps
+    -- clock.sleep(1/(96*4))
+    clock.sleep(1/15)
     -- manually pulse because auto is set to false
-    soot_lattice:pulse()
+    Soot._lattice:pulse()
     -- drive the core redraw function
     redraw()
   end
 end
 
+-- cleanup
 function Soot:cleanup()
-  soot_lattice:destroy()
-  clock.cancel(Soot_boiler_geezer_clock_id)
+  Soot._lattice:destroy()
+  clock.cancel(self._clock_id)
 end
-
-
-
-
--- SPRITE
--- SPRITE
--- SPRITE
--- SPRITE
-
-function Soot:sprite(name)
-  local s = setmetatable({}, { __index = Soot })
-  s.name = name
-  s._x = 0
-  s._y = 0
-  s._loop = false
-  s._pngs = self:scandir(self:dir() .. name)
-  s._png_count = #s._pngs
-  return s
-end
-
-function Soot:png_count()
-  return self._png_count
-end
-
--- returns the absolute path of this directory with trailing slash
-function Soot:sprite_directory()
-  return self._dir .. self.name .. "/"
-end
-
-function Soot:x(x)
-  self._x = x
-  return self
-end
-
-function Soot:y(y)
-  self._y = y
-  return self
-end
-
--- function Soot:loop()
---   self._loop = true
---   return self
--- end
-
--- function Soot:stop_loop()
---   self._loop = false
---   return self
--- end
 
 return Soot
