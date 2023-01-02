@@ -12,6 +12,9 @@ Soot = include "lib/Soot"
 -- sprite:some_way_to_control_speed(.5)
 -- sprite:set_blend_mode("add")
 -- move standard screen methods to redraw()
+-- Soot.lua clock calls redraw()
+-- remove lattice
+-- add fps option on setup
 -- ni graphics library port
 -- map.init() cartographies...
 
