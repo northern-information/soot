@@ -20,19 +20,24 @@ function keyboard_controller:keyboard_handler()
   local LEFT  = self._state["LEFT"]
 
   -- handle the keyboard feedback arrows
-  if (UP    > 0) then arrow_north:turn_on() else arrow_north:turn_off() end
-  if (RIGHT > 0) then arrow_east:turn_on()  else arrow_east:turn_off()  end
-  if (DOWN  > 0) then arrow_south:turn_on() else arrow_south:turn_off() end
-  if (LEFT  > 0) then arrow_west:turn_on()  else arrow_west:turn_off()  end
+  if (UP    > 0) then Soot:get("arrow_north"):turn_on() else Soot:get("arrow_north"):turn_off() end
+  if (RIGHT > 0) then Soot:get("arrow_east"):turn_on()  else Soot:get("arrow_east"):turn_off()  end
+  if (DOWN  > 0) then Soot:get("arrow_south"):turn_on() else Soot:get("arrow_south"):turn_off() end
+  if (LEFT  > 0) then Soot:get("arrow_west"):turn_on()  else Soot:get("arrow_west"):turn_off()  end
 
   -- handle the heading of the cci
-  if (UP    > 0) then cci._heading = "n" end
-  if (RIGHT > 0) then cci._heading = "e" end
-  if (DOWN  > 0) then cci._heading = "s" end
-  if (LEFT  > 0) then cci._heading = "w" end
+  if (UP    > 0) then Soot:get("cci"):heading("n") end
+  if (RIGHT > 0) then Soot:get("cci"):heading("e") end
+  if (DOWN  > 0) then Soot:get("cci"):heading("s") end
+  if (LEFT  > 0) then Soot:get("cci"):heading("w") end
 
   -- handle the movement state of the cci
-  if (UP > 0 or RIGHT > 0 or DOWN > 0 or LEFT > 0) then cci:start() else cci:stop() end
+  if (UP > 0 or RIGHT > 0 or DOWN > 0 or LEFT > 0) then
+    Soot:get("cci"):start()
+  else
+    Soot:get("cci"):stop()
+  end
+  
 end
 
 -- save all hid input codes + values to a table

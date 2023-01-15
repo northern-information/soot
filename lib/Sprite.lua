@@ -1,8 +1,9 @@
 Sprite = {}
 
-function Sprite:_new(name)
+function Sprite:_new(name, directory)
   local s = setmetatable({}, { __index = Sprite })
   s._name = name
+  s._directory = directory and directory or name
   s._frame = 0
   s._x = 0
   s._width = 0
@@ -12,55 +13,40 @@ function Sprite:_new(name)
   s._visible = true
   s._moving = false
   s._on = false
+  s._blend_mode = "add" -- i haven't experimented with anything other than add - tse
+  s._speed = 1
   return s
 end
 
-function Sprite:new_simple(name)
-  local s = Sprite:_new(name)
+function Sprite:new_simple(name, directory)
+  local s = Sprite:_new(name, directory)
   s._is_simple = true
   s._is_toggle = false
   s._is_cardinal = false
-  s._north = Soot:get_sprites(name)
-  s._north_count = #s._north
   return s
 end
 
-function Sprite:new_toggle(name)
-  local s = Sprite:_new(name)
+function Sprite:new_toggle(name, directory)
+  local s = Sprite:_new(name, directory)
   s._is_simple = false
   s._is_toggle = true
   s._is_cardinal = false
-  s._north = Soot:get_sprites(name)
-  s._north_count = #s._north
   return s
 end
 
-function Sprite:new_cardinal(name)
-  local s = Sprite:_new(name)
+function Sprite:new_cardinal(name, directory)
+  local s = Sprite:_new(name, directory)
   s._is_simple = false
   s._is_toggle = false
   s._is_cardinal = true
-  s._north = Soot:get_sprites(name, "n")
-  s._east  = Soot:get_sprites(name, "e")
-  s._south = Soot:get_sprites(name, "s")
-  s._west  = Soot:get_sprites(name, "w")
-  s._north_count = #s._north
-  s._east_count  = #s._east
-  s._south_count = #s._south
-  s._west_count  = #s._west
   return s
 end
 
-function Sprite:new_simple(name)
-  local s = Sprite:_new(name)
-  s._is_cardinal = false
-  s._is_simple = true
-  s._north = Soot:get_sprites(name)
-  s._north_count = #s._north
-  return s
-end
 
 function Sprite:next()
+  -- print(self._speed % Soot._fps)
+  -- print((self._speed / 2) % Soot._fps)
+  -- print((self._speed / 4) % Soot._fps)
   self._frame = util.wrap(self._frame + 1, 0, self:count() - 1)
   return self:current()
 end
@@ -71,7 +57,7 @@ function Sprite:current()
     heading = self._heading .. "/"
   end
   return Soot._sprites_directory
-    .. self._name
+    .. self._directory
     .. "/"
     .. heading
     .. self._frame
@@ -91,12 +77,13 @@ function Sprite:off()
 end
 
 -- get the current sprite frame count
--- "toggle" and "simple" sprites are considered "north"
 function Sprite:count()
-  if self._heading == "n" then return self._north_count end
-  if self._heading == "e" then return self._east_count end
-  if self._heading == "s" then return self._south_count end
-  if self._heading == "w" then return self._west_count end
+  local heading = ""
+  -- only cardinals use nested directories (for now...)
+  if (self:is_cardinal()) then
+    heading = self._heading
+  end
+  return #Soot:get_sprites(self._name, heading)
 end
 
 -- SETTERS
@@ -106,6 +93,11 @@ end
 -- SETTERS
 
 -- setters each "return self" to allow method chaining
+
+function Sprite:named(name)
+  self._name = name
+  return self
+end
 
 function Sprite:show()
   self._visible = true
@@ -165,11 +157,25 @@ function Sprite:height(h)
   return self
 end
 
+function Sprite:blend_mode(mode)
+  self._blend_mode = mode
+  return self
+end
+
+function Sprite:speed(f)
+  self._speed = f
+  return f
+end
+
 -- GETTERS
 -- GETTERS
 -- GETTERS
 -- GETTERS
 -- GETTERS
+
+function Sprite:get_directory()
+  return self._directory
+end
 
 function Sprite:get_x()
   return self._x
@@ -202,4 +208,12 @@ end
 -- used for "toggle sprites"
 function Sprite:is_on()
   return self._on
+end
+
+function Sprite:get_blend_mode()
+  return self._blend_mode
+end
+
+function Sprite:get_speed()
+  return self._speed
 end

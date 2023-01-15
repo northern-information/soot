@@ -2,52 +2,77 @@ include "lib/Sprite"
 
 Soot = {}
 
-function Soot.init(sprites_directory)
+function Soot.init(sprites_directory, fps)
+  if (sprites_directory == nil or sprites_directory == "") then
+    Soot:error("Sprite base directory required.")
+  end
   -- example: "/home/we/dust/code/my_script/sprites/"
   Soot._sprites_directory = sprites_directory
+    -- container for all our sprites
+  Soot._sprites = {}
   -- the arrow of time only goes one way, pairs well with modulo:
   Soot._frame = 0
-  -- container for all our sprites
-  Soot._sprites = {}
-  -- we do not want our sprites tied to norns' idea of bpm, so auto = false
-  Soot._lattice = lattice:new{ auto = false }
-  -- this is the core sprocket that drives all the sprite animations
-  sprocket_of_celestial_benevolence = Soot._lattice:new_sprocket{
-    action = function()
-      Soot._frame = Soot._frame + 1
-    end,
-    -- division is now frames per second (in theory)
-    division = 1 / 15,
-  }
-  Soot._lattice:start()
+  -- frames per second
+  Soot._fps = fps and fps or 15
   Soot._clock_id = clock.run(soot_clock)
 end
 
--- simple sprites only have the default heading of "north"
-function Soot:new_sprite(name)
-  local sprite = Sprite:new_simple(name)
+function soot_clock()
+  while true do
+    clock.sleep(1 / Soot._fps)
+    Soot._frame = Soot._frame + 1
+    redraw()
+  end
+end
+
+-- cleanup
+function Soot:cleanup()
+  clock.cancel(self._clock_id)
+end
+
+function Soot:error(message)
+  print("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
+  print("Soot Error: " .. message)
+  print("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
+end
+
+-- get a sprite by name
+function Soot:get(name)
+  local sprite = self._sprites[name]
+  if (sprite == nil) then
+    self:error("No sprite named " .. name .. ".")
+  else
+    return sprite
+  end
+end
+
+-- instantinate a new sprite
+-- simple sprites have the default heading of "north"
+function Soot:name_sprite(name, directory)
+  local sprite = Sprite:new_simple(name, directory)
   self._sprites[name] = sprite
   return sprite
 end
 
 -- toggle sprites have two states (0, 1) and the default heading of "north"
-function Soot:new_toggle_sprite(name)
-  local sprite = Sprite:new_toggle(name)
+function Soot:name_toggle_sprite(name, directory)
+  local sprite = Sprite:new_toggle(name, directory)
   self._sprites[name] = sprite
   return sprite
 end
 
 -- cardinal sprites have different views for north, east, south, and west
-function Soot:new_cardinal_sprite(name)
-  local sprite = Sprite:new_cardinal(name)
+function Soot:name_cardinal_sprite(name, directory)
+  local sprite = Sprite:new_cardinal(name, directory)
   self._sprites[name] = sprite
   return sprite
 end
 
 -- get all the sprites in a named + heading
 function Soot:get_sprites(name, heading)
+  local sprite = self:get(name)
   local heading = heading and heading or ""
-  local absolute_path = self._sprites_directory .. name .. "/" .. heading
+  local absolute_path = self._sprites_directory .. sprite:get_directory() .. "/" .. heading
   local i, t, popen = 0, {}, io.popen
   local pfile = popen("ls -a " .. absolute_path)
   for filename in pfile:lines() do
@@ -62,16 +87,10 @@ end
 
 -- call this from your scripts standard redraw function
 function Soot:redraw()
-  screen.clear()
-  screen.ping()
-  screen.level(15)
-  -- "add" stacks lighter pixels but ignores darker
-  screen.blend_mode('add')
   -- loop through each sprite and render them accordingly
   for name, sprite in pairs(self._sprites) do
     self:draw_sprite(sprite)
   end
-  screen.update()
 end
 
 -- handle each type of sprite & completely skip not visible ones
@@ -82,7 +101,9 @@ function Soot:draw_sprite(sprite)
   if (sprite:is_simple())       then self:draw_simple(sprite)   end
 end
 
+-- screen abstractions should only live on draw_* methods
 function Soot:draw_toggle(sprite)
+  screen.blend_mode(sprite:get_blend_mode())
   if (sprite:is_on()) then
     screen.display_png(sprite:on(), sprite:get_x(), sprite:get_y())
   else
@@ -95,6 +116,7 @@ function Soot:draw_cardinal(sprite)
 end
 
 function Soot:draw_simple(sprite)
+  screen.blend_mode(sprite:get_blend_mode())
   if (sprite:is_moving()) then
     screen.display_png(sprite:next(), sprite:get_x(), sprite:get_y())
   else
@@ -102,23 +124,55 @@ function Soot:draw_simple(sprite)
   end
 end
 
--- simple clock to drive the lattice
-function soot_clock()
-  while true do
-    -- lattice is built on 96 ppqn and Soot wants to think in fps
-    -- clock.sleep(1/(96*4))
-    clock.sleep(1/15)
-    -- manually pulse because auto is set to false
-    Soot._lattice:pulse()
-    -- drive the core redraw function
-    redraw()
-  end
+-- "move line rel stroke"
+function Soot:mlrs(x1, y1, x2, y2, l)
+  screen.level(l or 15)
+  screen.move(x1, y1)
+  screen.line_rel(x2, y2)
+  screen.stroke()
 end
 
--- cleanup
-function Soot:cleanup()
-  Soot._lattice:destroy()
-  clock.cancel(self._clock_id)
+-- "move line stroke"
+function Soot:mls(x1, y1, x2, y2, l)
+  screen.level(l or 15)
+  screen.move(x1, y1)
+  screen.line(x2, y2)
+  screen.stroke()
+end
+
+-- rectangle
+function Soot:rect(x, y, w, h, l)
+  screen.level(l or 15)
+  screen.rect(x, y, w, h)
+  screen.fill()
+end
+
+-- o
+function Soot:circle(x, y, r, l)
+  screen.level(l or 15)
+  screen.circle(x, y, r)
+  screen.fill()
+end
+
+-- <<<
+function Soot:text(x, y, s, l)
+  screen.level(l or 15)
+  screen.move(x, y)
+  screen.text(s)
+end
+
+-- >>>
+function Soot:text_right(x, y, s, l)
+  screen.level(l or 15)
+  screen.move(x, y)
+  screen.text_right(s)
+end
+
+-- |||
+function Soot:text_center(x, y, s, l)
+  screen.level(l or 15)
+  screen.move(x, y)
+  screen.text_center(s)
 end
 
 return Soot
