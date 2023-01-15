@@ -5,24 +5,38 @@ keyboard_controller = include "lib/keyboard_controller"
 -- Soot
 Soot = include "lib/Soot"
 
-
--- todo
--- sprite:some_way_to_control_speed(.5)
-
 function init()
   -- demo controller, not actually part of the soot library
   keyboard_controller.init()
 
   -- always initialize with the aboslute path to your sprites
-  -- second parameter is fps
+  -- second parameter is fps, 15 is suggested to start
   Soot.init("/home/we/dust/code/soot/sprites/", 15)
 
   -- "simple sprites" are either moving or not moving
   -- the name_*() methods accept a string which map to the name and directory by default
-  Soot:name_sprite("mycelium"):x(0):y(0):width(16):height(16):start()
-  Soot:name_sprite("dusty"):x(128-16):y(0):width(16):height(16):speed(.5):start()
-  Soot:name_sprite("quadrants"):x(0):y(48):width(16):height(16):speed(.25):start()
+  Soot:name_sprite("mycelium")
+    :x(0)
+    :y(0)
+    :width(16)
+    :height(16)
+    :start()
 
+  Soot:name_sprite("dusty")
+    :x(112)
+    :y(0)
+    :width(16)
+    :height(16)
+    :speed(.5)
+    :start()
+
+  Soot:name_sprite("quadrants")
+    :x(0)
+    :y(48)
+    :width(16)
+    :height(16)
+    :speed(.25)
+    :start()
 
   -- "toggle sprites" have two and only two states
   -- 0.png maps to "off", 1.png to "on"
@@ -58,7 +72,8 @@ function init()
     :width(16)
     :height(16)
 
-  -- newly-named sprites default to having a matching directory, but you can also set it explicity:
+  -- newly-named sprites default to having a matching directory...
+  -- but you can also set it explicity with a second parameter:
   Soot:name_cardinal_sprite("cci_half", "cci")
     :x(40)
     :y(24)
@@ -74,7 +89,6 @@ end
 
 function redraw()
   screen.clear()
-  screen.ping()
   Soot:redraw()
   screen.update()
 end

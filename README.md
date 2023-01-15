@@ -10,7 +10,7 @@ Soot is only a demo. It is neither production ready nor feature complete.
 
 ## Requirements
 
-norns `221214`
+Soot *should* work on all versions of norns. It was developed on `221214`.
 
 ## Usage
 
@@ -99,11 +99,17 @@ home/we/dust/code/
         |-8.png          
 ```       
 
-Let Soot take care of the redrawing:
+Soot has it's own clock which calls `redraw()` at the specified FPS for you:
 
 ```lua
 function redraw()
+  screen.clear()
   Soot:redraw()
+  screen.level(15)
+  screen.move(10, 10)
+  screen.text("all the usual screen stuff works as normal")
+  -- Soot:text(10, 10, "the northern information graphics library is in here, too!", 15)
+  screan.update()
 end
 ```
 
@@ -120,13 +126,23 @@ end
 Soot sprite definitions look something like this:
 
 ```lua
-dusty = Soot:new_sprite("dusty"):x(0):y(0):width(16):height(16):start()
+Soot:name_sprite("dusty")
+  :x(0)
+  :y(0)
+  :width(16)
+  :height(16)
+  :start()
 ```
 
 This type of syntax is known as "method chaining." Each method returns `self` so you can mix and match them in any order. So the below is functionally identicle to the above:
 
 ```lua
-dusty = Soot:new_sprite("dusty"):start():width(16):height(16):x(0):y(0)
+Soot:name_sprite("dusty")
+  :start()
+  :width(16)
+  :height(16)
+  :x(0)
+  :y(0)
 ```
 
 Define them however is most comfortable for you!
@@ -138,12 +154,16 @@ Once defined, used the various Sprite getters and setters to manipulate the grap
 All sprites implement the following APIs:
 
 ```lua
+local dusty = Soot:get("dusty") -- get a sprite by name
+
 dusty:show() -- immediately show the sprite
 dusty:hide() -- immediately hide the sprite
 dusty:x(20) -- set dusty's x coords to 20
 dusty:y(30) -- set dusty's y coords to 30
 dusty:width(16) -- set dusty's width
 dusty:height(16) -- set dusty's height
+dusty:speed(.5) -- only tested with slower & clean divisions
+dusty:blend_mode("add") -- abstraction for screen.blend_mode("add")
 
 -- use the following boolean getters for control flow:
 dusty:is_visible()
@@ -152,6 +172,13 @@ dusty:is_simple()
 dusty:is_toggle()
 dusty:is_cardinal()
 dusty:is_on()
+
+-- other handy getters:
+dusty:get_directory()
+dusty:get_x()
+dusty:get_y()
+dusty:get_blend_mode()
+dusty:get_speed()
 ```
 
 Only toggle sprites can use `turn_on` & `turn_off`:

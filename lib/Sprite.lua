@@ -93,11 +93,6 @@ end
 
 -- setters each "return self" to allow method chaining
 
-function Sprite:named(name)
-  self._name = name
-  return self
-end
-
 function Sprite:show()
   self._visible = true
   return self

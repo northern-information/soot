@@ -1,6 +1,7 @@
 include "lib/Sprite"
 
 Soot = {}
+Soot.version = "1.0.0-beta"
 
 function Soot.init(sprites_directory, fps)
   if (sprites_directory == nil or sprites_directory == "") then
@@ -55,6 +56,7 @@ end
 -- instantinate a new sprite
 -- simple sprites have the default heading of "north"
 function Soot:name_sprite(name, directory)
+  self:enforce_unique(name)
   local sprite = Sprite:new_simple(name, directory)
   self._sprites[name] = sprite
   return sprite
@@ -62,6 +64,7 @@ end
 
 -- toggle sprites have two states (0, 1) and the default heading of "north"
 function Soot:name_toggle_sprite(name, directory)
+  self:enforce_unique(name)
   local sprite = Sprite:new_toggle(name, directory)
   self._sprites[name] = sprite
   return sprite
@@ -69,9 +72,22 @@ end
 
 -- cardinal sprites have different views for north, east, south, and west
 function Soot:name_cardinal_sprite(name, directory)
+  self:enforce_unique(name)
   local sprite = Sprite:new_cardinal(name, directory)
   self._sprites[name] = sprite
   return sprite
+end
+
+function Soot:enforce_unique(name)
+  local is_unique = true
+  for k, v in pairs(self._sprites) do
+    if k == name then
+      is_unique = false
+    end
+  end
+  if (not is_unique) then
+    Soot:error("The name '" .. name .. "' has already been claimed by another sprite.")
+  end
 end
 
 -- get all the sprites in a named + heading
