@@ -6,8 +6,6 @@ Soot is a [sprite](https://en.wikipedia.org/wiki/Sprite_(computer_graphics)) and
 
 Soot makes animating and positioning your illustrated collection of .pngs easy. It can be used for UI elements, characters, symbols, and animations.
 
-Soot is only a demo. It is neither production ready nor feature complete.
-
 ## Requirements
 
 Soot *should* work on all versions of norns. It was developed on `221214`.
