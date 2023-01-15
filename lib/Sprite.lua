@@ -4,7 +4,7 @@ function Sprite:_new(name, directory)
   local s = setmetatable({}, { __index = Sprite })
   s._name = name
   s._directory = directory and directory or name
-  s._frame = 0
+  s._cel = 0 -- "animation cel"
   s._x = 0
   s._width = 0
   s._y = 0
@@ -42,12 +42,11 @@ function Sprite:new_cardinal(name, directory)
   return s
 end
 
-
 function Sprite:next()
-  -- print(self._speed % Soot._fps)
-  -- print((self._speed / 2) % Soot._fps)
-  -- print((self._speed / 4) % Soot._fps)
-  self._frame = util.wrap(self._frame + 1, 0, self:count() - 1)
+  local rate = Soot._fps / (self._speed * Soot._fps)
+  if ((Soot._arrow_of_time % rate) == 0) then
+    self._cel = util.wrap(self._cel + 1, 0, self:count() - 1)
+  end
   return self:current()
 end
 
@@ -60,19 +59,19 @@ function Sprite:current()
     .. self._directory
     .. "/"
     .. heading
-    .. self._frame
+    .. self._cel
     .. ".png"
 end
 
 -- short circuit the frame to "on"
 function Sprite:on()
-  self._frame = 1
+  self._cel = 1
   return self:current()
 end
 
 -- short circuit the frame to "off"
 function Sprite:off()
-  self._frame = 0
+  self._cel = 0
   return self:current()
 end
 
@@ -163,8 +162,18 @@ function Sprite:blend_mode(mode)
 end
 
 function Sprite:speed(f)
+  local tested_speed = false
+  local tested_speeds = {1, 0.5, 0.25, 0.125, 0.0625}
+  for k, v in pairs(tested_speeds) do
+    if v == f then
+      tested_speed = true
+    end
+  end
+  if (not tested_speed) then
+    Soot:warning(f .. " is an untested speed for sprite " .. self._name .. ".")
+  end
   self._speed = f
-  return f
+  return self
 end
 
 -- GETTERS

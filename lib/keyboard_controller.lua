@@ -26,16 +26,30 @@ function keyboard_controller:keyboard_handler()
   if (LEFT  > 0) then Soot:get("arrow_west"):turn_on()  else Soot:get("arrow_west"):turn_off()  end
 
   -- handle the heading of the cci
-  if (UP    > 0) then Soot:get("cci"):heading("n") end
-  if (RIGHT > 0) then Soot:get("cci"):heading("e") end
-  if (DOWN  > 0) then Soot:get("cci"):heading("s") end
-  if (LEFT  > 0) then Soot:get("cci"):heading("w") end
+  if (UP > 0) then
+    Soot:get("cci"):heading("n")
+    Soot:get("cci_half"):heading("n")
+  end
+  if (RIGHT > 0) then
+    Soot:get("cci"):heading("e")
+    Soot:get("cci_half"):heading("e")
+  end
+  if (DOWN > 0) then
+    Soot:get("cci"):heading("s")
+    Soot:get("cci_half"):heading("s")
+  end
+  if (LEFT > 0) then
+    Soot:get("cci"):heading("w")
+    Soot:get("cci_half"):heading("w")
+  end
 
   -- handle the movement state of the cci
   if (UP > 0 or RIGHT > 0 or DOWN > 0 or LEFT > 0) then
     Soot:get("cci"):start()
+    Soot:get("cci_half"):start()
   else
     Soot:get("cci"):stop()
+    Soot:get("cci_half"):stop()
   end
   
 end

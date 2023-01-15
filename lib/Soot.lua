@@ -11,7 +11,7 @@ function Soot.init(sprites_directory, fps)
     -- container for all our sprites
   Soot._sprites = {}
   -- the arrow of time only goes one way, pairs well with modulo:
-  Soot._frame = 0
+  Soot._arrow_of_time = 0
   -- frames per second
   Soot._fps = fps and fps or 15
   Soot._clock_id = clock.run(soot_clock)
@@ -20,7 +20,7 @@ end
 function soot_clock()
   while true do
     clock.sleep(1 / Soot._fps)
-    Soot._frame = Soot._frame + 1
+    Soot._arrow_of_time = Soot._arrow_of_time + 1
     redraw()
   end
 end
@@ -33,6 +33,12 @@ end
 function Soot:error(message)
   print("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
   print("Soot Error: " .. message)
+  print("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
+end
+
+function Soot:warning(message)
+  print("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
+  print("Soot Warning: " .. message)
   print("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
 end
 
